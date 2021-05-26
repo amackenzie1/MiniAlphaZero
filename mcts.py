@@ -246,7 +246,7 @@ def getversion():
     return int(open("info.txt").readlines()[0].split()[1])
 
 
-def work(episode_length):
+def work(episode_length, boss):
     version = getversion()
 
     model.load_weights("baby_alphazero/v1")
@@ -299,7 +299,7 @@ def process(episode_length):
         boss = str(os.getpid()) in file.readlines()[0]
         file.close() 
         while True:
-            work(episode_length)
+            work(episode_length, boss)
 
 
 if "baby_alphazero" not in os.listdir():
