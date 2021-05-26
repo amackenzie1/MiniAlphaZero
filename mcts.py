@@ -211,6 +211,7 @@ def play_vs_random():
 
 global num_processes
 num_processes = 2 
+episode_length = 6
 
 def iterate(episode_length):
     games = []
@@ -300,15 +301,9 @@ def process(episode_length):
         while True:
             work(episode_length)
 
-if __name__ == "__main__":
-    with tf.device("CPU:0"):
-        if "baby_alphazero" not in os.listdir():
-            model.build(input_shape=(6, 7, 2))
-            model.save_weights("baby_alphazero/v1")
 
-        num_processes = int(sys.argv[1])
-        episode_length = int(sys.argv[2])
-        os.system("rm boss.txt; rm -rf games; mkdir games")
-        with Pool(num_processes) as p:
-            p.map(process, [episode_length]*num_processes)
-    
+if "baby_alphazero" not in os.listdir():
+    model.build(input_shape=(6, 7, 2))
+    model.save_weights("baby_alphazero/v1")
+
+work(episode_length)
