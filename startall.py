@@ -7,8 +7,8 @@ num_computers = int(sys.argv[3])
 
 command = ""
 
-for i in range(num_processes):
-    command += f"python mcts.py {num_processes//num_computers} {num_episodes} & "
+for i in range(num_processes//num_episodes):
+    command += f"python mcts.py {num_processes} {num_episodes} & "
 command += "ls"
 
 os.system(command)
