@@ -18,8 +18,8 @@ from uuid import uuid1
 from multiprocessing import Pool 
 import sys 
 
-model = get_model()
 temp = 0.4
+model = get_model()
 
 def get_val(board):
     value = np.squeeze(model(np.array([process_board(board)])).numpy())
@@ -302,6 +302,10 @@ def process(episode_length):
 
 if __name__ == "__main__":
     with tf.device("CPU:0"):
+        if "baby_alphazero" not in os.listdir():
+            model.build(input_shape=(6, 7, 2))
+            model.save_weights("baby_alphazero/v1")
+
         num_processes = int(sys.argv[1])
         episode_length = int(sys.argv[2])
         os.system("rm boss.txt; rm -rf games; mkdir games")
