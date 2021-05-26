@@ -253,10 +253,12 @@ def work(episode_length, boss):
     iterate(episode_length)
     
     while getversion() == version and not boss:
+        print(f"Sleeping, I, {os.getpid()}, am not boss.")
         time.sleep(5)
 
     if boss:
-        while len(os.listdir()) < num_processes:
+        while len(os.listdir("games")) < num_processes:
+            print(f"Sleeping, I, {os.getpid()} am boss but there aren't enough processes done yet.")
             time.sleep(5)
     else:
         return      
