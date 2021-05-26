@@ -306,4 +306,6 @@ if "baby_alphazero" not in os.listdir():
     model.build(input_shape=(6, 7, 2))
     model.save_weights("baby_alphazero/v1")
 
-work(episode_length)
+episode_length = int(sys.argv[2])
+num_processes = int(sys.argv[1])
+process(episode_length)
