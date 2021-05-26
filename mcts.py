@@ -31,7 +31,7 @@ def evaluate(board):
         return isended, Softmax()(np.array([0]*7, dtype='float32'))
 
     val, probs = model(np.array([process_board(board)]))
-    return val.numpy()[0][0], Softmax()(np.squeeze(probs)/temp)
+    return val.numpy()[0][0], np.squeeze(probs)
 
 """def evaluate(board):
     isended = check(board)
