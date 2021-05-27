@@ -207,7 +207,7 @@ def iterate(episode_length):
 
     gamefile = str(uuid1())
 
-    pickle.dump(games, open(f"games/{gamefile}.p", "wb"))
+    pickle.dump(games, open(f"games/{os.uname()[1]}:{gamefile}.p", "wb"))
     
 def get_data():
     games = []
@@ -239,52 +239,10 @@ def work(episode_length, boss):
     
     while getversion() == version and not boss:
         print(f"Sleeping, I, {os.getpid()}, am not boss.")
-        time.sleep(3)
-
-    if boss:
-        while len(os.listdir("games")) < num_processes:
-            print(f"Sleeping, I, {os.getpid()} am boss but there aren't enough processes done yet.")
-            time.sleep(3)
-    else:
-        return      
-    print(f"Process {os.getpid()} starting training.")
-
-    score = benchmark(100)
-    bench = open("benchmark.txt", "a")
-    bench.write(f"Time: {time.ctime()}, Score: {score}\n")
-    bench.close()
-    
-    window_size = min(20, max(min(version, 4), version//2))*episode_length 
-    print(f"Window size: {window_size}")
-    if "training_data.p" in os.listdir():
-        training_data = pickle.load( open( f"training_data.p", "rb" ) )
-    else:
-        training_data = [] 
-    
-    training_data += get_data()
-    training_data = training_data[-1*window_size:]
-    pickle.dump(training_data, open(f"training_data.p", "wb"))
-    random.shuffle(training_data)
-
-    print(f"Length of training data: {len(training_data)}")
-
-    boards, policies, results = expand(training_data)
-
-    print(f"Shape of boards: {boards.shape}") 
-    model.fit(boards, {'policy': policies, 'value': results}, epochs=2, batch_size=32)
-    model.save_weights("baby_alphazero/v1")
-
-    open("info.txt", "w").write(f"Version: {version+1}")
-    
+        time.sleep(3)    
 
 def process(episode_length):
     with tf.device("CPU:0"):
-        """file = open("boss.txt", 'a')
-        file.write(f"{os.getpid()}\n")
-        file.close()
-        file = open("boss.txt")
-        boss = str(os.getpid()) in file.readlines()[0]
-        file.close()""" 
         while True:
             work(episode_length, False)
 
