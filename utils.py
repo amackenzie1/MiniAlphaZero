@@ -17,6 +17,20 @@ def display(board):
         print("")
         print("----------------------")
 
+def human_display(board):
+    print("")
+    for row in board:
+        print("|", end="")
+        for i in row:
+            if i == -1:
+                print(f" X |", end="")
+            elif i == 1:
+                print(f" O |", end="")
+            else:
+                print(f"   |", end="")
+        print("")
+        print("-----------------------------")
+
 check_rows = np.array([
     [1, 1, 1, 1, 0, 0, 0],
     [0, 1, 1, 1, 1, 0, 0],

@@ -1,6 +1,5 @@
 import numpy as np
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Sequential 
