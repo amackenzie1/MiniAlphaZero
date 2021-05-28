@@ -15,7 +15,6 @@ import pickle
 from expand_boards import expand
 import random 
 from uuid import uuid1
-from multiprocessing import Pool 
 import sys 
 
 temp = 0.4
