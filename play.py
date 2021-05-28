@@ -33,22 +33,6 @@ def evaluate(board):
     val, probs = model(np.array([process_board(board)]))
     return val.numpy()[0][0], np.squeeze(probs)
 
-"""def evaluate(board):
-    isended = check(board)
-    if isended != 0:
-        return isended, Softmax()(np.array([0]*7, dtype='float32'))
-
-    val = get_val(board)
-    probs = np.array([0]*7, dtype='float32')
-    for i in range(7):
-        x = move(board, i, 1)
-        if x is None:
-            probs[i] = 0
-        else:
-            probs[i] = get_val(x)
-    return val, Softmax()(probs/temp)
-            """
-
 class Node:
     def __init__(self, board, prob, parent=None, root=False, turn=1, done=False):
         self.board = board
@@ -61,7 +45,6 @@ class Node:
         self.root = root 
         self.turn = turn 
         self.done = False 
-
 
 c_puct = 4
 
@@ -186,13 +169,6 @@ def play_game(tau, depth):
     return list(zip(boards, policies, get_sequence(len(boards), x)))
 
 
-obvious = []
-obvious.append(makeboard("554433"))
-obvious.append(makeboard("554466"))
-obvious.append(makeboard("545354"))
-obvious.append(makeboard("121416"))
-
-
 def play_vs_random():
     mcts = MonteCarloSearchTree(0.01)
     mcts.search(25)
@@ -213,9 +189,9 @@ def play_vs_random():
 
     return -1 
 
-def play_vs_human():
+def play_vs_human(depth):
     mcts = MonteCarloSearchTree(0.01)
-    mcts.search(400)
+    mcts.search(depth)
     model_move = mcts.get_move()
     mcts.info()
     x = mcts.advance_root(model_move)
@@ -225,16 +201,14 @@ def play_vs_human():
     human_display(mcts.root.board*-1)
 
     while x == 2:
-        mcts.search(400)
+        mcts.search(depth)
         model_move = mcts.get_move()
         mcts.info()
         x = mcts.advance_root(model_move)
         human_display(mcts.root.board)
-
         if x != 2:
             print("I win!")
             return 1
-
         human_move = int(input("Your move: ")) - 1
         x = mcts.advance_root(human_move)
         human_display(mcts.root.board*-1)
@@ -243,98 +217,52 @@ def play_vs_human():
     print("You win...")
     return -1 
 
-global num_processes
-num_processes = 2 
-episode_length = 6
+def play_vs_model(start):
+    my_name = str(uuid1())
+    mcts = MonteCarloSearchTree(0.01)
+    while True:
+        if start:
+            mcts.search(400)
+            model_move = mcts.get_move()
+            mcts.info()
+            x = mcts.advance_root(model_move)
+            human_display(mcts.root.board)
+            open("move.txt", "w").write(f"{my_name} {model_move}")
+            if x != 2:
+                open("wins.txt", "a").write("1\n")
+                return
+            fp = open("move.txt")
+            while fp.readlines()[0].split()[0] == my_name:
+                fp.close()
+                time.sleep(0.5)
+                fp = open("move.txt")
+            fp.close()
+            fp = open("move.txt")
+            other_move = int(fp.readlines()[0].split()[1])
+            x = mcts.advance_root(other_move)
+            human_display(mcts.root.board)
+            if x != 2:
+                open("wins.txt", "a").write("-1\n")
+                return
+        else:
+            fp = open("move.txt")
+            while fp.readlines()[0].split()[0] == my_name:
+                fp.close()
+                time.sleep(0.5)
+                fp = open("move.txt")
+            fp.close()
+            fp = open("move.txt")
+            other_move = int(fp.readlines()[0].split()[1])
+            x = mcts.advance_root(other_move)
+            if x != 2:
+                return
+            mcts.search(400)
+            model_move = mcts.get_move()
+            mcts.info()
+            x = mcts.advance_root(model_move)
+            open("move.txt", "w").write(f"{my_name} {model_move}")
+            if x != 2:
+                return
 
-def iterate(episode_length):
-    games = []
-
-    for i in range(episode_length//num_processes):
-        print(f"Process {os.getpid()}, game {i+1}")
-        games.append(play_game(1, 25))
-
-    gamefile = str(uuid1())
-
-    pickle.dump(games, open(f"games/{gamefile}.p", "wb"))
-    
-def get_data():
-    games = []
-    for i in os.listdir("games"):
-        games += pickle.load( open( f"games/{i}", "rb" ) )
-    for i in os.listdir("games"):
-        os.remove(f"games/{i}")
-    return games 
-
-
-def benchmark(length):
-    score = 0
-    for i in range(length):
-        print(f"Benchmark game {i+1}")
-        score += play_vs_random()
-    
-    wins = (score + length)/2 
-    return wins/length 
-
-def getversion():
-    return int(open("info.txt").readlines()[0].split()[1])
-
-
-def work(episode_length, boss):
-    version = getversion()
-
-    model.load_weights("baby_alphazero/v1")
-    iterate(episode_length)
-    
-    while getversion() == version and not boss:
-        print(f"Sleeping, I, {os.getpid()}, am not boss.")
-        time.sleep(5)
-
-    if boss:
-        while len(os.listdir("games")) < num_processes:
-            print(f"Sleeping, I, {os.getpid()} am boss but there aren't enough processes done yet.")
-            time.sleep(5)
-    else:
-        return      
-    print(f"Process {os.getpid()} starting training.")
-
-    score = benchmark(100)
-    bench = open("benchmark.txt", "a")
-    bench.write(f"Time: {time.ctime()}, Score: {score}\n")
-    bench.close()
-    
-    window_size = min(20, max(min(version, 4), version//2))*episode_length 
-    print(f"Window size: {window_size}")
-    if "training_data.p" in os.listdir():
-        training_data = pickle.load( open( f"training_data.p", "rb" ) )
-    else:
-        training_data = [] 
-    
-    training_data += get_data()
-    training_data = training_data[-1*window_size:]
-    pickle.dump(training_data, open(f"training_data.p", "wb"))
-    random.shuffle(training_data)
-
-    print(f"Length of training data: {len(training_data)}")
-
-    boards, policies, results = expand(training_data)
-
-    print(f"Shape of boards: {boards.shape}") 
-    model.fit(boards, {'policy': policies, 'value': results}, epochs=2, batch_size=32)
-    model.save_weights("baby_alphazero/v1")
-
-    open("info.txt", "w").write(f"Version: {version+1}")
-    
-
-def process(episode_length):
-    with tf.device("CPU:0"):
-        file = open("boss.txt", 'a')
-        file.write(f"{os.getpid()}\n")
-        file.close()
-        file = open("boss.txt")
-        boss = str(os.getpid()) in file.readlines()[0]
-        file.close() 
-        while True:
-            work(episode_length, boss)
-
-play_vs_human()
+model.load_weights("alpha_connect/v1")
+play_vs_human(400)

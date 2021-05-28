@@ -70,8 +70,7 @@ def train():
     model.save_weights("baby_alphazero/v1")
 
     
-
 num_processes = int(sys.argv[1])
-num_episodes = int(sys.argv[2])
+episode_length = int(sys.argv[2])
 while True:
     train()
